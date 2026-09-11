@@ -388,7 +388,7 @@ def print_metrics(m: dict, title: str = ""):
 # 主流程
 # ════════════════════════════════════════════════════════════
 def run_inference(df: pd.DataFrame, out_path: Path, max_new_tokens: int,
-                  variant: str = "base", adapter: str = ""):
+                  variant: str = "base", adapter: str = "", max_pixels: int = 0):
     import transformers
     from transformers import AutoModelForImageTextToText, AutoProcessor
 
@@ -401,6 +401,23 @@ def run_inference(df: pd.DataFrame, out_path: Path, max_new_tokens: int,
     print("\n── 加载模型 ──")
     t0 = time.time()
     processor = AutoProcessor.from_pretrained(str(MODEL_DIR))
+
+    # ★ 视觉 token 预算控制。
+    #
+    # 重要：MAX_PIXELS 环境变量是 **ms-swift 的约定**，transformers 的
+    # processor 完全不读它。想控制分辨率必须直接改 image_processor.size。
+    #
+    # 默认配置是 longest_edge=16777216（1600 万像素），等于没有上限 ——
+    # 财报原图最大 5.8M 像素，单图最多产生 4281 个视觉 token。
+    # 10 张图就是 4 万+ token，这是多图题崩溃的可疑机制之一。
+    if max_pixels:
+        processor.image_processor.size = {
+            "longest_edge": int(max_pixels), "shortest_edge": 65536,
+        }
+        print(f"  视觉 token 预算: longest_edge={max_pixels}")
+    else:
+        print(f"  视觉 token 预算: 未设上限 (processor 默认 "
+              f"longest_edge={processor.image_processor.size.get('longest_edge')})")
     model = AutoModelForImageTextToText.from_pretrained(
         str(MODEL_DIR), dtype=torch.bfloat16, device_map="cuda:0"
     ).eval()
@@ -454,6 +471,7 @@ def run_inference(df: pd.DataFrame, out_path: Path, max_new_tokens: int,
                 "idx": int(i), "qtype": row["qtype"], "src": row["src"],
                 "variant": variant,
                 "adapter": Path(adapter).name if adapter else "",
+                "max_pixels": max_pixels,
                 "gold": row["gold"], "pred": pred, "raw_output": gen,
                 "num_images": int(row["num_images"]),
                 "images": [Path(p).name for p in row["abs_images"]],
@@ -517,6 +535,8 @@ def main():
     ap.add_argument("--variant", default="base", help="prompt 变体名，见 PROMPT_VARIANTS")
     ap.add_argument("--qtype", default="", choices=["", "mc", "tf"], help="只跑某题型")
     ap.add_argument("--adapter", default="", help="LoRA adapter 目录（微调后评测用）")
+    ap.add_argument("--max-pixels", type=int, default=0,
+                    help="视觉 token 预算上限（longest_edge），0=不设上限")
     ap.add_argument("--uids-file", default="", help="只评测该文件列出的 uid（用于 test split）")
     ap.add_argument("--merge", action="store_true", help="只汇总，不推理")
     args = ap.parse_args()
@@ -556,8 +576,10 @@ def main():
 
     print(f"  prompt 变体: {args.variant}")
     print(f"  adapter    : {args.adapter or '(无，zero-shot)'}")
+    print(f"  max_pixels : {args.max_pixels or '(无上限)'}")
     out_path = out_dir / f"predictions.shard{args.shard_id}.jsonl"
-    run_inference(df, out_path, args.max_new_tokens, args.variant, args.adapter)
+    run_inference(df, out_path, args.max_new_tokens, args.variant,
+                  args.adapter, args.max_pixels)
 
     if args.num_shards == 1:
         merge(out_dir)
