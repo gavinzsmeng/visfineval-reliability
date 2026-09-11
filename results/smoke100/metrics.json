@@ -1,0 +1,135 @@
+{
+  "mc": {
+    "n": 81,
+    "correct": 57,
+    "raw_accuracy": 0.7037,
+    "constant_baseline": 0.642,
+    "constant_label": "A",
+    "random_baseline": 0.25,
+    "lift_vs_constant": 0.0617,
+    "lift_vs_random": 0.4537,
+    "unparsed": 1,
+    "gold_distribution": {
+      "A": 52,
+      "B": 17,
+      "C": 9,
+      "D": 3
+    },
+    "pred_distribution": {
+      "A": 42,
+      "B": 21,
+      "C": 11,
+      "D": 6,
+      "?": 1
+    }
+  },
+  "mc_single": {
+    "n": 72,
+    "correct": 49,
+    "raw_accuracy": 0.6806,
+    "constant_baseline": 0.625,
+    "constant_label": "A",
+    "random_baseline": 0.25,
+    "lift_vs_constant": 0.0556,
+    "lift_vs_random": 0.4306,
+    "unparsed": 1,
+    "gold_distribution": {
+      "A": 45,
+      "B": 15,
+      "C": 9,
+      "D": 3
+    },
+    "pred_distribution": {
+      "A": 36,
+      "B": 18,
+      "C": 11,
+      "D": 6,
+      "?": 1
+    }
+  },
+  "mc_multi": {
+    "n": 9,
+    "correct": 8,
+    "raw_accuracy": 0.8889,
+    "constant_baseline": 0.7778,
+    "constant_label": "A",
+    "random_baseline": 0.5,
+    "lift_vs_constant": 0.1111,
+    "lift_vs_random": 0.3889,
+    "unparsed": 0,
+    "gold_distribution": {
+      "A": 7,
+      "B": 2
+    },
+    "pred_distribution": {
+      "A": 6,
+      "B": 3
+    }
+  },
+  "tf": {
+    "n": 19,
+    "correct": 15,
+    "raw_accuracy": 0.7895,
+    "constant_baseline": 0.8947,
+    "constant_label": "是",
+    "random_baseline": 0.5,
+    "lift_vs_constant": -0.1053,
+    "lift_vs_random": 0.2895,
+    "unparsed": 0,
+    "gold_distribution": {
+      "是": 17,
+      "否": 2
+    },
+    "pred_distribution": {
+      "是": 15,
+      "否": 4
+    }
+  },
+  "tf_single": {
+    "n": 19,
+    "correct": 15,
+    "raw_accuracy": 0.7895,
+    "constant_baseline": 0.8947,
+    "constant_label": "是",
+    "random_baseline": 0.5,
+    "lift_vs_constant": -0.1053,
+    "lift_vs_random": 0.2895,
+    "unparsed": 0,
+    "gold_distribution": {
+      "是": 17,
+      "否": 2
+    },
+    "pred_distribution": {
+      "是": 15,
+      "否": 4
+    }
+  },
+  "_overall": {
+    "n": 100,
+    "correct": 72,
+    "raw_accuracy": 0.72,
+    "constant_baseline": 0.52,
+    "constant_label": "A",
+    "random_baseline": 0.1667,
+    "lift_vs_constant": 0.2,
+    "lift_vs_random": 0.5533,
+    "unparsed": 1,
+    "gold_distribution": {
+      "A": 52,
+      "是": 17,
+      "B": 17,
+      "C": 9,
+      "D": 3,
+      "否": 2
+    },
+    "pred_distribution": {
+      "A": 42,
+      "B": 21,
+      "是": 15,
+      "C": 11,
+      "D": 6,
+      "否": 4,
+      "?": 1
+    }
+  }
+}
