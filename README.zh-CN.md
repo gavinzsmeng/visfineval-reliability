@@ -14,10 +14,9 @@ VisFinEval（EMNLP 2025）报告其最优模型 Qwen-VL-max 达到 **76.3%**。�
 
 ## 发现 1 — 答案分布让 raw accuracy 几乎失去意义
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig1_answer_distribution_dark.png">
-  <img alt="多选题答案分布：A 58.5%、B 26.6%、C 10.7%、D 4.1%" src="assets/fig1_answer_distribution.png">
-</picture>
+<p align="center">
+  <img src="assets/1.png" width="95%" alt="多选题答案分布：A 58.5%、B 26.6%、C 10.7%、D 4.1%">
+</p>
 
 VisFinEval 全部 **16,404** 道多选题中，**58.5% 的正确答案是「A」**。
 
@@ -36,10 +35,9 @@ VisFinEval 全部 **16,404** 道多选题中，**58.5% 的正确答案是「A」
 
 ## 发现 2 — 模型在少数类上比随机猜还差
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig2_minority_recall_dark.png">
-  <img alt="判断题召回率：zero-shot 少数类 42.5%，LoRA 后 69.0%" src="assets/fig2_minority_recall.png">
-</picture>
+<p align="center">
+  <img src="assets/2.png" width="95%" alt="判断题召回率：zero-shot 少数类 39.7%，LoRA 后 69.0% / 69.8%">
+</p>
 
 判断题看起来是表现**最好**的一类（raw 77.46%），但按标签拆开：
 
@@ -56,10 +54,9 @@ raw accuracy 与 macro-recall 相差 **11.20 个百分点**——全数据集最
 
 ## 发现 3 — 多图崩溃是能力上限，不是 token 预算问题
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig3_multi_image_curve_dark.png">
-  <img alt="准确率随图片数量的变化，四条线对应四档视觉 token 预算" src="assets/fig3_multi_image_curve.png">
-</picture>
+<p align="center">
+  <img src="assets/3.png" width="95%" alt="准确率随图片数量的变化，四条线对应四档视觉 token 预算">
+</p>
 
 准确率随单题图片数单调下降：
 
@@ -131,10 +128,9 @@ raw accuracy 与 macro-recall 相差 **11.20 个百分点**——全数据集最
 
 在 2,889 条 held-out test 样本上（按来源研报切分，与训练集零重叠）：
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig4_gain_concentration_dark.png">
-  <img alt="增益分布：多数类 +1.5pp，少数类 +29.3pp" src="assets/fig4_gain_concentration.png">
-</picture>
+<p align="center">
+  <img src="assets/4.png" width="95%" alt="增益分布：多数类 +1.5pp，少数类 +29.3pp">
+</p>
 
 ```
   条件                  多选raw   判断raw  判断macro   「否」召回 [95% CI]

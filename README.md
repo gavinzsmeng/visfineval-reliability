@@ -82,10 +82,9 @@ Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
 
 ### Finding 1 — 答案分布导致 Raw Accuracy 严重失真
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig1_answer_distribution_dark.png">
-  <img alt="Multiple-choice answer distribution: A 58.5%, B 26.6%, C 10.7%, D 4.1%" src="assets/fig1_answer_distribution.png">
-</picture>
+<p align="center">
+  <img src="assets/1.png" width="95%" alt="Severely Skewed Answer Distribution in Multiple-Choice Questions">
+</p>
 
 在 VisFinEval 全量 **16,404** 道多选题中，**58.5% 的真实答案是 "A"**。  
 一个完全不看图、不做任何推理的模型，只要永远输出 `A`，就能拿到 **58.5% 的准确率**。  
@@ -101,10 +100,9 @@ Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
 
 ### Finding 2 — 模型在少数类上的表现显著低于抛硬币
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig2_minority_recall_dark.png">
-  <img alt="True/False recall: zero-shot 42.5% on the minority class, vs 69.0% after LoRA" src="assets/fig2_minority_recall.png">
-</picture>
+<p align="center">
+  <img src="assets/2.png" width="95%" alt="Few-shot classification is close to zero-shot; fine-tuning improves it significantly">
+</p>
 
 全量判断题看起来是最好的题型（Raw Accuracy 77.46%），但拆开看：
 
@@ -120,10 +118,9 @@ Raw 与 Macro-Recall 相差 **11.20 个百分点**（全数据集最大）。模
 
 ### Finding 3 — 多图推理崩溃是跨图整合上限，而非 Token 预算不足
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig3_multi_image_curve_dark.png">
-  <img alt="Accuracy vs number of images, across four visual-token budgets" src="assets/fig3_multi_image_curve.png">
-</picture>
+<p align="center">
+  <img src="assets/3.png" width="95%" alt="Performance Drop with Multiple Images is Not a Token Budget Problem">
+</p>
 
 准确率随题目包含的图表数量呈现单调剧烈下滑：
 
@@ -176,12 +173,9 @@ Raw 与 Macro-Recall 相差 **11.20 个百分点**（全数据集最大）。模
 
 ### Finding 5 — 微调能够修复少数类崩溃，且增益几乎全部集中于少数类
 
-在独立测试集（n=2,889，按来源研报切分，与训练集 0 重叠）上的实验：
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/fig4_gain_concentration_dark.png">
-  <img alt="Gain concentration: +1.5pp on the majority class vs +29.3pp on the minority" src="assets/fig4_gain_concentration.png">
-</picture>
+<p align="center">
+  <img src="assets/4.png" width="95%" alt="Fine-tuning brings large gains on the minority class, with minimal change on the majority class">
+</p>
 
 ```
   实验条件              多选 Raw    判断 Raw    判断 Macro    「否」召回率 [95% CI]
