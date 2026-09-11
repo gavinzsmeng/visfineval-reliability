@@ -249,6 +249,21 @@ rank Qwen3-VL strictly above its predecessor and never surface the regression.
 
 ---
 
+## 📦 Released weights
+
+Both LoRA adapters are published on HuggingFace:
+
+| Adapter | What it is | Link |
+| :--- | :--- | :--- |
+| **Natural** *(use this one)* | Standard SFT on the natural label distribution. Fixes the minority collapse. | [`visfineval-qwen3vl-8b-lora-natural`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-natural) |
+| **Balanced** *(ablation)* | Class-balanced resampling. Released so the negative result is reproducible — **not recommended for use.** | [`visfineval-qwen3vl-8b-lora-balanced`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-balanced) |
+
+Each model card documents the exact training config, the results table, and the prompt
+that must be used verbatim (prompt wording moves minority-class recall by up to 23 points
+on this task).
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Environment (~10 min)

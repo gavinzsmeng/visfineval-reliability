@@ -246,6 +246,20 @@ Raw 与 Macro-Recall 相差 **11.20 个百分点**（全数据集最大）。模
 
 ---
 
+## 📦 已开源权重
+
+两个 LoRA adapter 已发布到 HuggingFace：
+
+| Adapter | 说明 | 链接 |
+| :--- | :--- | :--- |
+| **Natural**（推荐用这个） | 按原始标签分布的标准 SFT，修复了少数类崩溃 | [`visfineval-qwen3vl-8b-lora-natural`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-natural) |
+| **Balanced**（消融） | 类别均衡重采样。发布出来是为了让负结果可复现 —— **不推荐实际使用** | [`visfineval-qwen3vl-8b-lora-balanced`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-balanced) |
+
+两个模型卡里都记录了完整训练配置、结果表，以及**必须逐字使用的 prompt**
+（措辞会让少数类召回率摆动最多 23 个百分点）。
+
+---
+
 ## 🚀 快速开始 (Quick Start)
 
 ### 1. 环境准备 (~10 分钟)
