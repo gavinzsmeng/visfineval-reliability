@@ -14,22 +14,22 @@
 
 ## 📢 News
 
-- **[2026-09]** 发布训练后评测报告：通过标签均衡 LoRA 微调，判断题少数类召回率实现 **+30.1pp** 的重大突破（39.7% → 69.8%）。
-- **[2026-09]** 建立 0 泄漏研报分组切分体系（70/15/15），彻底规避原基准 78% 的数据跨集记忆风险。
-- **[2026-09]** 完成 Qwen3-VL-8B-Instruct 全量 19,208 条零样本基准评测及 6 组 Prompt 鲁棒性压力测试。
+- **[2026-09]** 发布微调配对评测结果：LoRA 微调使判断题少数类召回率实现 **+29.3pp ~ +30.1pp** 的重大跃升（39.7% → 69.0% / 69.8%），逐样本 McNemar 检验达成 p < 0.001 显著性。
+- **[2026-09]** 建立 0 泄漏研报分组切分体系（70/15/15），彻底消除原基准 78% 的跨集数据记忆风险。
+- **[2026-09]** 完成 Qwen3-VL-8B-Instruct 全量 19,208 条零样本评测、视觉 Token 预算扫描及 6 组 Prompt 鲁棒性压力测试。
 
 ---
 
 ## 🌟 Key Highlights
 
 - **0 泄漏数据切分协议 (0-Leakage Protocol)**  
-  VisFinEval 原生无训练切分，单份研报最多贡献 161 道 QA。随机切分会导致 78% 研报跨集泄漏。本项目通过 `doc_key` 实现研报级分组隔离，达成严格的 0 泄漏契约。
+  VisFinEval 原生无训练集划分，单份研报最多衍生 161 道题目。若随机切分，78% 的测试样本其来源研报会提前出现在训练集。本项目基于 `doc_key` 实现研报级分组隔离，达成严格的 0 泄漏契约。
 - **穿透单一准确率假象 (Beyond Raw Accuracy)**  
-  Qwen3-VL-8B 在判断题上 Raw Accuracy 达 77.46%，但少数类「否」召回率仅 **39.7%**（显著低于随机抛硬币 50%）。本项目引入常数及格线、Macro-Recall 与 95% Wilson 置信区间，量化虚假繁荣。
+  Qwen3-VL-8B 在判断题上 Raw Accuracy 达 77.46%，但少数类「否」的召回率仅 **39.7%**（显著低于随机抛硬币 50%）。本项目强制同时报告常数及格线、Macro-Recall 与 95% Wilson 置信区间。
 - **长多图推理崩溃边界 (Multi-Image Breakdown Curve)**  
-  量化模型在多图上下文下的退化曲线：图数 ≥8 时能力崩塌，10 张图题目的准确率降至 29.5%，相对常数基线净跌 29.5pp。
+  量化模型在多图上下文下的退化曲线：图数 ≥8 时能力崩塌，10 张图题目的准确率降至 29.5%，相对常数基线净跌 29.5pp；并通过分辨率消融证明其瓶颈在于跨图注意力整合而非视觉 Token 预算。
 - **配对闭环微调 (Rigorous Paired Alignment)**  
-  基于 ms-swift 打造多卡 LoRA 流水线，对比 Natural 原始分布与 Balanced 均衡上采样。在固化 UID 的 2,889 条测试集上实现逐样本 McNemar 配对检验与指标跃升。
+  基于 ms-swift 打造多卡 LoRA 流水线，在完全相同的 2,889 条测试样本上验证微调增益，通过逐样本 McNemar 精确检验，证实微调增益 95% 集中于少数类。
 
 ---
 
@@ -64,9 +64,7 @@ Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
 
 ## 📊 Benchmark & Experimental Results
 
-所有条件均在完全相同的一批无泄漏测试集（Test Split: n=2,889）上执行，推理采用 Greedy 解码，对齐全局 UID。
-
-### 1. 训练前后主结果对比 (Leaderboard)
+所有条件均在完全相同的一批无泄漏测试集（Test Split: n=2,889）上执行，采用 Greedy 解码，对齐全局 UID。
 
 | 实验条件 | 多选题 Raw | 多选多图题 Raw | 判断题 Raw | 判断题 Macro | 「否」召回率 (95% Wilson CI) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -76,80 +74,170 @@ Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
 | **LoRA Balanced** (均衡上采样) | 82.78% | 68.06% | **84.01%** | **79.43%** | **69.8% [60.9, 77.4]** |
 | **净增益 (Net Gain)** | **+10.43pp** | **+9.94pp** | **+8.78pp** | **+15.70pp** | **+30.1pp** |
 
-> **关键判读**：
-> 1. 微调使少数类「否」的召回率从 **39.7% 跃迁至 69.8%**，彻底修复了基座模型在判断题上退化为“盲选是”的结构性缺陷。
-> 2. Balanced 条件在少数类召回上达到最优（69.8%），但多选题整体准确率轻微下降 1.35pp，清晰量化了类别均衡带来的 Pareto 权衡。
-
 ---
 
 ## 🔬 Core Diagnostic Findings
 
-在全量 19,208 条 VisFinEval 数据上的零样本诊断揭示了 4 个关键科学事实：
+在全量 19,208 条样本与测试子集上的系统性实证诊断：
 
-### 发现 1 — Raw Accuracy 掩盖了判断题的少数类崩溃
-判断题表面 Raw 准确率高达 77.46%，但模型在「否」类别的召回率仅 42.5%，落后抛硬币。模型在隐空间更倾向于顺应语言先验输出肯定答复。
+### Finding 1 — 答案分布导致 Raw Accuracy 严重失真
 
-### 发现 2 — 多图复合推理的清晰退化曲线
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig1_answer_distribution_dark.png">
+  <img alt="Multiple-choice answer distribution: A 58.5%, B 26.6%, C 10.7%, D 4.1%" src="assets/fig1_answer_distribution.png">
+</picture>
+
+在 VisFinEval 全量 **16,404** 道多选题中，**58.5% 的真实答案是 "A"**。  
+一个完全不看图、不做任何推理的模型，只要永远输出 `A`，就能拿到 **58.5% 的准确率**。  
+因此，「常数基线」不是地板，而是**及格线**。任何汇报的成绩都必须对照及格线阅读：
+
+| 指标 | 核心内涵 |
+| :--- | :--- |
+| **Raw Accuracy** | 传统论文常报指标（易受答案分布倾斜严重污染） |
+| **Constant Baseline** | 永远输出多数类答案的基线 —— 及格线而非零分线 |
+| **Macro-Recall** | 各类别独立召回率的均值 —— 剔除分布污染的客观能力 |
+
+---
+
+### Finding 2 — 模型在少数类上的表现显著低于抛硬币
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig2_minority_recall_dark.png">
+  <img alt="True/False recall: zero-shot 42.5% on the minority class, vs 69.0% after LoRA" src="assets/fig2_minority_recall.png">
+</picture>
+
+全量判断题看起来是最好的题型（Raw Accuracy 77.46%），但拆开看：
 
 ```
-   图表数      样本数 (n)      Raw Accuracy      常数基线      相对基线净增益
-     2            666            75.5%            45.8%          +29.7pp
-     4            227            61.7%            29.5%          +32.2pp
-     8             60            50.0%            56.7%           -6.7pp  (跌破基线)
-    10             78            29.5%            59.0%          -29.5pp  (崩溃)
+  真值     样本量(n)     占比        召回率
+   是       2,063       73.6%       90.0%
+   否         741       26.4%       42.5%    [95% CI 39.0–46.1]   ← 显著低于随机猜(50%)
 ```
 
-10 张图的复合题目中，模型准确率落后“全选 A”达 29.5 个百分点，暴露出视觉 Transformer 跨图表注意力随序列增长的瓶颈。
+Raw 与 Macro-Recall 相差 **11.20 个百分点**（全数据集最大）。模型在判断题上高度趋向退化为“全选是”（答了 520 次「否」，仅对 315 次）。
 
-### 发现 3 — 题型对 Prompt 措辞的敏感度差异巨大
-在 6 组措辞变体（各 n=2,804）测试中发现：
-- **多选题极其鲁棒**：措辞调整导致的指标摆动 <1.5pp。
-- **判断题极其脆弱**：仅将“是/否”改为“正确/错误”，少数类召回率直接由 **42.5% 跃升至 65.6%**（Macro 提升 6.7pp）。
-- **显式去偏失效**：加入 `nobias`（提示“不要默认选是”）后净翻错 23 条，说明该缺陷源于能力上限而非指令理解。
+---
 
-### 发现 4 — 基准数据集本身的格式矛盾
-定位出 55 条模型输出多个字母被规则判错的题目，全部为「以下哪些……」句式（富集度达 10.8 倍），但标注真值仅为单字母，属于基准自身的标注缺陷。
+### Finding 3 — 多图推理崩溃是跨图整合上限，而非 Token 预算不足
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig3_multi_image_curve_dark.png">
+  <img alt="Accuracy vs number of images, across four visual-token budgets" src="assets/fig3_multi_image_curve.png">
+</picture>
+
+准确率随题目包含的图表数量呈现单调剧烈下滑：
+
+```
+   图表数     样本数 (n)      Raw Accuracy      常数基线      相对基线净增益
+     2           666            75.5%            45.8%          +29.7pp
+     4           227            61.7%            29.5%          +32.2pp
+     8            60            50.0%            56.7%           -6.7pp  (跌破基线)
+    10            78            29.5%            59.0%          -29.5pp  (崩溃)
+```
+
+在 10 张图的题目中，模型得分比“盲选 A”低 29.5 个百分点。多期报表对比是金融分析的核心场景，该瓶颈极为关键。
+
+**直觉假设（显存或视觉 Token 不足导致的截断）被实验否定。**  
+我们通过调节处理器 `longest_edge` 对视觉 Token 预算进行了 4 档扫描（2,939 样本 × 4 档）：
+
+```
+   Token 预算     tok/img    1图     2图    3-4图   5-6图   8+图    整体表现
+   无上限 (no cap)  4281    74.7%   75.5%   62.1%   85.2%   38.8%    70.7%
+   上限 1.0M         979    74.5%   74.8%   59.6%   70.4%   43.2%    70.0%
+   上限 0.5M         461    72.5%   74.9%   56.3%   66.7%   43.9%    68.3%
+   上限 0.25M        243    70.1%   69.7%   52.7%   59.3%   35.3%    64.6%
+```
+
+在 8+ 张图区间，压缩 Token 预算后准确率反而略微提升（38.8% → 43.9%），且 4 档预算下的退化曲线形态高度一致（相对单图落后 −35.9 / −31.4 / −28.6 / −34.8 pp）。  
+**结论**：多图崩溃的根因在于模型跨图注意力表征能力的极限，而非输入 Token 数量。  
+**工程参考**：`longest_edge = 1M` 是最佳操作点，在仅损失 0.7pp 精度下减少了 4.4 倍视觉 Token。
+
+---
+
+### Finding 4 — 评测结论极度依赖措辞，Raw 指标甚至给出错误导向
+
+在 4 种 Prompt 变体下重复判断题实验（各 n = 2,804）：
+
+```
+  变体                                     Raw     常数基线    Macro     「否」召回率
+  base (基线默认措辞)                     77.5%     73.6%     66.3%        42.5%
+  nobias (显式提示“不要默认选是”)         76.6%     73.6%     67.9%        49.3%
+  correct_wrong (将“是/否”改为“正确/错误”) 76.5%     73.6%     73.0%        65.6%
+  ab_format (转换为 A/B 选项题型)         77.5%     73.6%     72.3%        61.3%
+```
+
+1. **少数类崩溃是固有属性**：4 个变体下「否」召回率均低于「是」22~48 个百分点。
+2. **措辞可大幅改变结论**：仅将“是/否”替换为“正确/错误”，少数类召回率即从 **42.5% 跃升至 65.6%**。
+3. **Raw 与 Macro 方向相反**：所有变体的 Raw 均不优于 base（净翻对/错为 −27 / −23 / 0），但 Macro-Recall 最大提升 6.7pp。**若仅以 Raw Accuracy 为导向优化 Prompt，会选出对少数类最差的版本。**
+4. **显式提示失效**：`nobias` 指令反而带来净变化 −23，证明模型并非不知道要平衡，而是受限于隐空间计算能力。  
+   多选题对措辞极不敏感（<1.5pp），两类题型的评测鲁棒性存在本质差异。
+
+---
+
+### Finding 5 — 微调能够修复少数类崩溃，且增益几乎全部集中于少数类
+
+在独立测试集（n=2,889，按来源研报切分，与训练集 0 重叠）上的实验：
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig4_gain_concentration_dark.png">
+  <img alt="Gain concentration: +1.5pp on the majority class vs +29.3pp on the minority" src="assets/fig4_gain_concentration.png">
+</picture>
+
+```
+  实验条件              多选 Raw    判断 Raw    判断 Macro    「否」召回率 [95% CI]
+  Zero-shot (基座)      73.70%      75.23%      63.73%       39.7% [31.2, 48.8]
+  LoRA Natural          84.13%      84.01%      79.15%       69.0% [60.1, 76.7]
+  LoRA Balanced         82.78%      84.01%      79.43%       69.8% [60.9, 77.4]
+```
+
+逐样本配对比较（基于全局统一 `uid`）：
+
+```
+  Zero-shot -> LoRA Natural     翻对 430 条   翻错 136 条   净变化 +294 条   McNemar p < 0.001 (极显著)
+  Zero-shot -> LoRA Balanced    翻对 428 条   翻错 167 条   净变化 +261 条   McNemar p < 0.001 (极显著)
+```
+
+**增益高度集中于少数类（增益相差 20 倍）：**
+
+```
+  「是」召回率 (n=328)    87.8%  ->  89.3%     +1.5pp
+  「否」召回率 (n=116)    39.7%  ->  69.0%    +29.3pp      ← 20 倍增益集中度
+```
+
+**Negative Finding 消融结论**：标签均衡重采样（Balanced）并未带来额外显著收益 —— 多选 Raw Accuracy 下降了 1.35pp（p = 0.024），少数类召回率仅提升 0.8pp。说明少数类崩溃并非由训练样本不均衡引起，常规 Natural 分布下的监督微调已足够激活模型的图表辨别能力。
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. 环境准备 (约 10 分钟)
+### 1. 环境准备 (~10 分钟)
 ```bash
 git clone https://github.com/gavinzsmeng/visfineval-reliability.git
 cd visfineval-reliability
-
-# 配置 conda 环境并安装 ms-swift 4.6
 bash scripts/setup_env.sh
 ```
 
-### 2. 下载数据与模型权重
+### 2. 下载数据与基座权重
 ```bash
-# 下载基准数据集与 Qwen3-VL 权重
 bash scripts/hf.sh download SUFE-AIFLM-Lab/VisFinEval --repo-type dataset --local-dir data/VisFinEval
 bash scripts/hf.sh download Qwen/Qwen3-VL-8B-Instruct --local-dir models/Qwen3-VL-8B-Instruct
-
-# 解压图表资产 (约 1.7 GB)
 7z x data/VisFinEval/data.7z -odata/VisFinEval/
 ```
 
 ### 3. 数据无泄漏切分
 ```bash
-# 生成自然分布与标签均衡分布切分 (包含 0 泄漏断言检查)
 python scripts/prepare_data.py --out data/swift     --balance natural
 python scripts/prepare_data.py --out data/swift_bal --balance balanced
 ```
 
 ### 4. 启动多卡 LoRA 微调
 ```bash
-# 使用 4×RTX 4090 并行训练
 bash scripts/run_lora.sh natural     # 原始分布微调 (~1.6h)
 bash scripts/run_lora.sh balanced    # 标签均衡微调 (~4.9h)
 ```
 
 ### 5. 训练后自动化配对评测
 ```bash
-# 在固定测试集上自动化运行三条件推理并生成配对比较
 bash scripts/run_posttrain_eval.sh
 ```
 
@@ -158,22 +246,22 @@ bash scripts/run_posttrain_eval.sh
 ## 🛠️ Codebase Structure
 
 ```
-├── configs/               # 分布式与微调配置 (DeepSpeed ZeRO-2 等)
-├── data/                  # 数据切分产物 (已做研报级隔离，不托管图像原图)
-├── models/                # 基座模型存放目录 (Qwen3-VL-8B-Instruct)
-├── output/                # 训练 Checkpoints 与 TensorBoard 日志
-├── results/               # 评测原始预测 (jsonl) 与全景指标汇总
-│   ├── RESULTS.md         # 详细实验记录与消融报告
-│   ├── zeroshot/          # 零样本基线预测
-│   ├── posttrain_*/       # 微调模型评估结果
-│   └── sensitivity/       # Prompt 敏感性测试结果
-├── scripts/               # 核心流水线脚本
-│   ├── prepare_data.py    # 防泄漏切分与 ms-swift 格式化
-│   ├── eval_baseline.py   # 多卡评测 Harness 与指标计算
-│   ├── run_lora.sh        # LoRA 微调启动器
+├── configs/                  # 分布式与微调配置 (DeepSpeed ZeRO-2 等)
+├── data/                     # 数据切分产物 (研报级隔离，不托管图像原图)
+├── models/                   # 基座模型存放目录 (Qwen3-VL-8B-Instruct)
+├── output/                   # 训练 Checkpoints 与 TensorBoard 日志
+├── results/                  # 评测原始预测与全景指标汇总
+│   ├── RESULTS.md            # 详细实验记录与消融报告
+│   ├── zeroshot/             # 零样本基线预测
+│   ├── posttrain_*/          # 微调模型评测产物
+│   └── sensitivity/          # Prompt 敏感性测试产物
+├── scripts/                  # 核心流水线脚本
+│   ├── prepare_data.py       # 防泄漏分组切分
+│   ├── eval_baseline.py      # 多卡评测 Harness
+│   ├── run_lora.sh           # LoRA 微调启动器
 │   ├── run_posttrain_eval.sh # 训练后评测编排脚本
 │   └── compare_conditions.py # McNemar 配对检验与 Wilson 置信区间
-└── requirements.lock.txt  # 严密锁定的环境依赖清单
+└── requirements.lock.txt     # 锁定的环境依赖清单
 ```
 
 ---
@@ -192,8 +280,8 @@ bash scripts/run_posttrain_eval.sh
 如果本项目的方法论或评测工具链对您的研究/工程有所启发，请引用：
 
 ```bibtex
-@misc{meng2026finvlmreliability,
-  title  = {FinVLM-Reliability: Beyond Raw Accuracy in Financial Multimodal Understanding},
+@misc{meng2026visfinevalrel,
+  title  = {VisFinEval Reliability Audit: what reported accuracy hides},
   author = {Meng, Gavin C.},
   year   = {2026},
   url    = {https://github.com/gavinzsmeng/visfineval-reliability}
