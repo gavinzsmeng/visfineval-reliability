@@ -18,9 +18,16 @@
   <a href="README.ja.md">日本語</a>
 </p>
 
+<p align="center">
+  <img src="assets/Teaser.png" width="100%" alt="VisFinEval 可靠性诊断 —— 超越单一准确率">
+</p>
+
 ---
 
 ## 📢 最新动态 (News)
+
+- **[2026-09]** 跨代审计结果：**Qwen3-VL-8B 相比 Qwen2.5-VL-7B 原始准确率提升 4.0pp，
+  但少数类召回率从 71.6% 崩至 39.7%** —— 新一代模型在长尾上反而更不可靠。
 
 - **[2026-09]** 发布微调配对评测结果：LoRA 微调使判断题少数类（「否」）召回率实现 **+29.3pp ~ +30.1pp** 的重大跃升（39.7% → 69.0% / 69.8%），逐样本 McNemar 检验达成 $p < 0.001$ 显著性。
 - **[2026-09]** 建立 0 泄漏研报分组切分体系（70/15/15），彻底消除原基准 78% 的跨集数据记忆风险。
@@ -43,13 +50,17 @@
 
 ## 🏗️ 系统架构 (System Architecture)
 
+<p align="center">
+  <img src="assets/Pipeline.png" width="100%" alt="三阶段流水线：零泄漏切分、LoRA 微调、配对评测">
+</p>
+
 ```
 Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
                       |
                       v
       [0-Leakage Report-Level Split]
-      ├── Train (13,445) ── doc_key Grouping
-      ├── Val    (2,874) ── 0 Overlap Assertion
+      ├── Train (13,465) ── doc_key Grouping
+      ├── Val    (2,854) ── 0 Overlap Assertion
       └── Test   (2,889) ── Fixed Global UID
                       |
         +-------------+-------------+
@@ -85,6 +96,10 @@ Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
 ---
 
 ## 🔬 核心诊断发现 (Core Findings)
+
+<p align="center">
+  <img src="assets/Findings.png" width="100%" alt="核心发现：多图退化曲线与少数类召回率">
+</p>
 
 ### Finding 1 — 答案分布导致 Raw Accuracy 严重失真
 
@@ -207,6 +222,30 @@ Raw 与 Macro-Recall 相差 **11.20 个百分点**（全数据集最大）。模
 ```
 
 **Negative Finding 消融结论**：标签均衡重采样（Balanced）并未带来额外显著收益 —— 多选 Raw Accuracy 下降了 1.35pp（p = 0.024），少数类召回率仅提升 0.8pp。说明少数类崩溃并非由训练样本不均衡引起，常规 Natural 分布下的监督微调已足够激活模型的图表辨别能力。
+
+---
+
+### Finding 6 — 新一代模型可以「更不可靠」：Qwen3-VL 相对上一代发生了回归
+
+我们用**完全相同的评测管线**（同一测试集、同一 prompt、同一指标口径）跑了同家族的上一代模型：
+
+| 模型 | 多选 Raw | 常数基线 | 判断 Raw | 判断 Macro | 「否」召回率 (95% CI) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Qwen2.5-VL-7B（上一代） | 69.7% | 58.6% | 75.7% | **74.3%** | **71.6%** [62.8, 79.0] |
+| Qwen3-VL-8B（新一代） | **73.7%** | 58.6% | 75.2% | 63.7% | 39.7% [31.2, 48.8] |
+
+**Qwen3-VL 的原始准确率提升了 4.0pp，同时少数类召回率崩塌了 31.9pp。**
+两个置信区间完全不重叠。
+
+注意 Qwen2.5-VL 在多数类上其实**更差**（「是」召回 77.1% vs 87.8%）——
+它用多数类召回换来了远为均衡的 macro 表现（74.3% vs 63.7%）。
+
+这是对本项目论点最干净的一次实证：**模型可以「平均更好」的同时「长尾更差」。**
+只报 raw accuracy 的榜单会把 Qwen3-VL 排在上一代之上，永远看不到这个回归。
+
+> **这也排除了「是 benchmark 坏了」这个解释。** 39.7% 的崩溃不是 VisFinEval 的性质——
+> 同一个 benchmark、同一个切分、同一个 prompt，在上一代模型上得到的是健康的 71.6%。
+> 失败属于模型本身，而只有看得见 raw accuracy 之外的指标才能发现它。
 
 ---
 

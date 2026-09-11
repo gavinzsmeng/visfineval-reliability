@@ -18,9 +18,17 @@
   <a href="README.ja.md">日本語</a>
 </p>
 
+<p align="center">
+  <img src="assets/Teaser.png" width="100%" alt="VisFinEval Reliability Audit — beyond raw accuracy">
+</p>
+
 ---
 
 ## 📢 News
+
+- **[2026-09]** Cross-generation audit: **Qwen3-VL-8B gains +4.0pp raw accuracy over
+  Qwen2.5-VL-7B while its minority-class recall collapses 71.6% → 39.7%** — a newer model
+  that is measurably less reliable on the tail.
 
 - **[2026-09]** Released post-training evaluation report: LoRA fine-tuning lifts True/False minority class ("No") recall by **+29.3pp ~ +30.1pp** (39.7% → 69.0% / 69.8%), achieving paired McNemar significance of $p < 0.001$.
 - **[2026-09]** Built a 0-leakage report-level grouping split (70/15/15), eliminating the 78% cross-split contamination risk inherent in random splitting.
@@ -43,13 +51,17 @@
 
 ## 🏗️ System Architecture
 
+<p align="center">
+  <img src="assets/Pipeline.png" width="100%" alt="Three-stage pipeline: zero-leakage split, LoRA fine-tuning, paired evaluation">
+</p>
+
 ```
 Raw Brokerage Reports (3,318 Docs, 19,208 QAs)
                       |
                       v
       [0-Leakage Report-Level Split]
-      ├── Train (13,445) ── doc_key Grouping
-      ├── Val    (2,874) ── 0 Overlap Assertion
+      ├── Train (13,465) ── doc_key Grouping
+      ├── Val    (2,854) ── 0 Overlap Assertion
       └── Test   (2,889) ── Fixed Global UID
                       |
         +-------------+-------------+
@@ -85,6 +97,10 @@ All conditions evaluated on the identical held-out test set ($n=2,889$), greedy 
 ---
 
 ## 🔬 Core Diagnostic Findings
+
+<p align="center">
+  <img src="assets/Findings.png" width="100%" alt="Key findings: multi-image breakdown curve and minority-class recall">
+</p>
 
 ### Finding 1 — The answer distribution makes raw accuracy nearly meaningless
 
@@ -206,6 +222,33 @@ Paired per-sample comparison (identical global `uid`):
 ```
 
 **Negative Finding**: Class-balanced resampling yields no significant surplus gain — MC raw drops 1.35pp ($p=0.024$) while minority recall rises by only 0.8pp. The collapse was not caused by imbalanced training data; standard SFT on natural distribution already resolves chart comprehension.
+
+---
+
+### Finding 6 — A newer model can be *less* reliable: Qwen3-VL regressed against its own predecessor
+
+We ran the identical harness — same test split, same prompt, same metric definitions — on
+the previous generation of the same model family:
+
+| Model | MC Raw | Constant Base | TF Raw | TF Macro | Recall @ "No" (95% CI) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Qwen2.5-VL-7B (previous gen) | 69.7% | 58.6% | 75.7% | **74.3%** | **71.6%** [62.8, 79.0] |
+| Qwen3-VL-8B (current gen) | **73.7%** | 58.6% | 75.2% | 63.7% | 39.7% [31.2, 48.8] |
+
+**Qwen3-VL gains +4.0pp in raw accuracy while its minority-class recall collapses by
+31.9pp.** The two confidence intervals do not overlap.
+
+Note also that Qwen2.5-VL is *worse* on the majority class (recall @ "Yes" 77.1% vs 87.8%)
+— it trades majority-class recall for a far more balanced macro profile (74.3% vs 63.7%).
+
+This is the cleanest possible demonstration of the thesis: a model can get **better on
+average while getting worse on the tail**. A leaderboard reporting only raw accuracy would
+rank Qwen3-VL strictly above its predecessor and never surface the regression.
+
+> **This also rules out the "broken benchmark" explanation.** The 39.7% collapse is not a
+> property of VisFinEval — the same benchmark, same split, and same prompt produce a
+> healthy 71.6% on the previous generation. The failure belongs to the model, and only a
+> metric that looks past raw accuracy can see it.
 
 ---
 
