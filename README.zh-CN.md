@@ -23,9 +23,12 @@
 
 ## 📢 最新动态 (News)
 
+- **[2026-09]** **两个 LoRA adapter 已在 HuggingFace 开源** ——
+  [`natural`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-natural) 与
+  [`balanced`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-balanced)。
+  结论 → 代码 → 权重，可端到端复现。
 - **[2026-09]** 跨代审计结果：**Qwen3-VL-8B 相比 Qwen2.5-VL-7B 原始准确率提升 4.0pp，
   但少数类召回率从 71.6% 崩至 39.7%** —— 新一代模型在长尾上反而更不可靠。
-
 - **[2026-09]** 发布微调配对评测结果：LoRA 微调使判断题少数类（「否」）召回率实现 **+29.3pp ~ +30.1pp** 的重大跃升（39.7% → 69.0% / 69.8%），逐样本 McNemar 检验达成 $p < 0.001$ 显著性。
 - **[2026-09]** 建立 0 泄漏研报分组切分体系（70/15/15），彻底消除原基准 78% 的跨集数据记忆风险。
 - **[2026-09]** 完成 Qwen3-VL-8B-Instruct 全量 19,208 条零样本评测、4 档视觉 Token 预算扫描及 6 组 Prompt 鲁棒性压力测试。
@@ -302,17 +305,27 @@ bash scripts/run_posttrain_eval.sh
 ├── data/                     # 数据切分产物 (研报级隔离，不托管图像原图)
 ├── models/                   # 基座模型存放目录 (Qwen3-VL-8B-Instruct)
 ├── output/                   # 训练 Checkpoints 与 TensorBoard 日志
+├── assets/                   # README 用图
 ├── results/                  # 评测原始预测与全景指标汇总
 │   ├── RESULTS.md            # 详细实验记录与消融报告
-│   ├── zeroshot/             # 零样本基线预测
+│   ├── zeroshot/             # 零样本基线预测（全量 19,208 条）
 │   ├── posttrain_*/          # 微调模型评测产物
-│   └── sensitivity/          # Prompt 敏感性测试产物
+│   ├── model_qwen25vl-7b/    # 跨代对比
+│   ├── sensitivity/          # Prompt 敏感性扫描
+│   └── tokenbudget_*/        # 视觉 Token 预算扫描（4 档）
 ├── scripts/                  # 核心流水线脚本
 │   ├── prepare_data.py       # 防泄漏分组切分
 │   ├── eval_baseline.py      # 多卡评测 Harness
+│   ├── run_eval.sh           # 零样本评测启动器
 │   ├── run_lora.sh           # LoRA 微调启动器
 │   ├── run_posttrain_eval.sh # 训练后评测编排脚本
-│   └── compare_conditions.py # McNemar 配对检验与 Wilson 置信区间
+│   ├── run_prompt_sensitivity.sh / run_token_budget_sweep.sh
+│   ├── run_model_comparison.sh
+│   ├── compare_conditions.py # McNemar 配对检验与 Wilson 置信区间
+│   ├── compare_models.py     # 跨模型 / 跨代对比
+│   ├── analyze_results.py / analyze_sensitivity.py / analyze_token_budget.py
+│   ├── make_figures.py       # 重新生成 README 里的全部图表
+│   └── upload_to_hf.sh       # 发布 LoRA adapter
 └── requirements.lock.txt     # 锁定的环境依赖清单
 ```
 

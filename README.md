@@ -23,10 +23,13 @@
 
 ## 📢 News
 
+- **[2026-09]** **Released both LoRA adapters on HuggingFace** —
+  [`natural`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-natural) and
+  [`balanced`](https://huggingface.co/gavinzsmeng/visfineval-qwen3vl-8b-lora-balanced).
+  Reproducible end to end: conclusions → code → weights.
 - **[2026-09]** Cross-generation audit: **Qwen3-VL-8B gains +4.0pp raw accuracy over
   Qwen2.5-VL-7B while its minority-class recall collapses 71.6% → 39.7%** — a newer model
   that is measurably less reliable on the tail.
-
 - **[2026-09]** Released post-training evaluation report: LoRA fine-tuning lifts True/False minority class ("No") recall by **+29.3pp ~ +30.1pp** (39.7% → 69.0% / 69.8%), achieving paired McNemar significance of $p < 0.001$.
 - **[2026-09]** Built a 0-leakage report-level grouping split (70/15/15), eliminating the 78% cross-split contamination risk inherent in random splitting.
 - **[2026-09]** Completed full zero-shot audit on all 19,208 VisFinEval questions, 4-tier visual token budget sweeps, and 6 prompt robustness variants on Qwen3-VL-8B-Instruct.
@@ -306,17 +309,27 @@ bash scripts/run_posttrain_eval.sh
 ├── data/                     # Report-level split outputs (0-leakage, no image redistribution)
 ├── models/                   # Base model directory (Qwen3-VL-8B-Instruct)
 ├── output/                   # LoRA checkpoints & TensorBoard run logs
+├── assets/                   # Figures used in this README
 ├── results/                  # Evaluation prediction jsonl & metrics
 │   ├── RESULTS.md            # Comprehensive experiment records & ablation ledger
-│   ├── zeroshot/             # Zero-shot baseline predictions
+│   ├── zeroshot/             # Zero-shot baseline (full 19,208 questions)
 │   ├── posttrain_*/          # Fine-tuned evaluation predictions
-│   └── sensitivity/          # Prompt sensitivity test outputs
+│   ├── model_qwen25vl-7b/    # Cross-generation comparison
+│   ├── sensitivity/          # Prompt sensitivity sweep
+│   └── tokenbudget_*/        # Visual token budget sweep (4 tiers)
 ├── scripts/                  # Production pipeline scripts
 │   ├── prepare_data.py       # 0-leakage report-level grouping & formatting
 │   ├── eval_baseline.py      # Multi-GPU evaluation harness
+│   ├── run_eval.sh           # Zero-shot evaluation launcher
 │   ├── run_lora.sh           # Multi-card LoRA runner
 │   ├── run_posttrain_eval.sh # Paired post-train orchestrator
-│   └── compare_conditions.py # McNemar paired tests & Wilson CI
+│   ├── run_prompt_sensitivity.sh / run_token_budget_sweep.sh
+│   ├── run_model_comparison.sh
+│   ├── compare_conditions.py # McNemar paired tests & Wilson CI
+│   ├── compare_models.py     # Cross-model / cross-generation comparison
+│   ├── analyze_results.py / analyze_sensitivity.py / analyze_token_budget.py
+│   ├── make_figures.py       # Regenerates every figure in this README
+│   └── upload_to_hf.sh       # Publishes the LoRA adapters
 └── requirements.lock.txt     # Pinned Python package dependencies
 ```
 
