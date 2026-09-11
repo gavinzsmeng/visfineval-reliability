@@ -388,7 +388,8 @@ def print_metrics(m: dict, title: str = ""):
 # 主流程
 # ════════════════════════════════════════════════════════════
 def run_inference(df: pd.DataFrame, out_path: Path, max_new_tokens: int,
-                  variant: str = "base", adapter: str = "", max_pixels: int = 0):
+                  variant: str = "base", adapter: str = "", max_pixels: int = 0,
+                  model_dir: str = "", trust_remote_code: bool = False):
     import transformers
     from transformers import AutoModelForImageTextToText, AutoProcessor
 
@@ -399,8 +400,11 @@ def run_inference(df: pd.DataFrame, out_path: Path, max_new_tokens: int,
     print(f"  样本数       : {len(df)}")
 
     print("\n── 加载模型 ──")
+    mdir = Path(model_dir) if model_dir else MODEL_DIR
+    print(f"  路径: {mdir}")
     t0 = time.time()
-    processor = AutoProcessor.from_pretrained(str(MODEL_DIR))
+    processor = AutoProcessor.from_pretrained(
+        str(mdir), trust_remote_code=trust_remote_code)
 
     # ★ 视觉 token 预算控制。
     #
@@ -419,7 +423,8 @@ def run_inference(df: pd.DataFrame, out_path: Path, max_new_tokens: int,
         print(f"  视觉 token 预算: 未设上限 (processor 默认 "
               f"longest_edge={processor.image_processor.size.get('longest_edge')})")
     model = AutoModelForImageTextToText.from_pretrained(
-        str(MODEL_DIR), dtype=torch.bfloat16, device_map="cuda:0"
+        str(mdir), dtype=torch.bfloat16, device_map="cuda:0",
+        trust_remote_code=trust_remote_code,
     ).eval()
 
     # LoRA adapter（微调后评测用）。
@@ -538,6 +543,9 @@ def main():
     ap.add_argument("--max-pixels", type=int, default=0,
                     help="视觉 token 预算上限（longest_edge），0=不设上限")
     ap.add_argument("--uids-file", default="", help="只评测该文件列出的 uid（用于 test split）")
+    ap.add_argument("--model", default="", help="模型目录（默认 models/Qwen3-VL-8B-Instruct）")
+    ap.add_argument("--trust-remote-code", action="store_true",
+                    help="InternVL 等需要自定义代码的模型要开")
     ap.add_argument("--merge", action="store_true", help="只汇总，不推理")
     args = ap.parse_args()
 
@@ -577,9 +585,10 @@ def main():
     print(f"  prompt 变体: {args.variant}")
     print(f"  adapter    : {args.adapter or '(无，zero-shot)'}")
     print(f"  max_pixels : {args.max_pixels or '(无上限)'}")
+    print(f"  model      : {args.model or '(默认 Qwen3-VL-8B-Instruct)'}")
     out_path = out_dir / f"predictions.shard{args.shard_id}.jsonl"
     run_inference(df, out_path, args.max_new_tokens, args.variant,
-                  args.adapter, args.max_pixels)
+                  args.adapter, args.max_pixels, args.model, args.trust_remote_code)
 
     if args.num_shards == 1:
         merge(out_dir)
